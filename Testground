@@ -1,0 +1,43 @@
+import cv2
+import numpy as np
+
+from pathlib import Path
+
+def nothing(x):
+    pass
+
+# Create a black image and a window.
+image_path = Path(__file__).with_name("Heiko.jpg")
+image = cv2.imread(str(image_path))
+if image is None:
+    raise FileNotFoundError(f"Could not open image: {image_path}")
+
+window_name = "image"
+cv2.namedWindow(window_name)
+
+# Create trackbars for color changes.
+cv2.createTrackbar("R", window_name, 0, 255, nothing)
+cv2.createTrackbar("G", window_name, 0, 255, nothing)
+cv2.createTrackbar("B", window_name, 0, 255, nothing)
+
+# Create a switch for ON/OFF functionality.
+switch = "0 : OFF\n1 : ON"
+cv2.createTrackbar(switch, window_name, 0, 1, nothing)
+
+while True:
+    cv2.imshow(window_name, image)
+    key = cv2.waitKey(1) & 0xFF
+    if key == 27:
+        break
+
+    red = cv2.getTrackbarPos("R", window_name)
+    green = cv2.getTrackbarPos("G", window_name)
+    blue = cv2.getTrackbarPos("B", window_name)
+    enabled = cv2.getTrackbarPos(switch, window_name)
+
+    if enabled == 0:
+        image[:] = 0
+    else:
+        image[:] = [blue, green, red]
+
+cv2.destroyAllWindows()
