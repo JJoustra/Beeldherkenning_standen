@@ -9,7 +9,7 @@ def nothing(x):
     pass
 
 # Load image
-image = cv2.imread('balls.png')
+image = cv2.imread('/Users/slashure/Beeldherkenning_standen/test_foto\'s/Shiko_Dachi/ezgif-frame-001.jpg')
 
 # Create a window
 cv2.namedWindow('image')
