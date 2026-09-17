@@ -11,7 +11,7 @@ def nothing(x):
     pass
 
 # Load image
-image_path = Path("test_fotos/KokutsuDachiF/ezgif-frame-001.jpg")
+image_path = Path("/Users/slashure/Downloads/Kokutsu_Dachi/ezgif-83c462515585d782-jpg/ezgif-frame-007.jpg")
 image = cv2.imread(str(image_path))
 if image is None:
     raise FileNotFoundError(f"Could not open image: {image_path}")
@@ -41,13 +41,16 @@ cv2.createTrackbar('GMax', 'Controls', 0, 255, nothing)
 cv2.createTrackbar('RMax', 'Controls', 0, 255, nothing)
 cv2.createTrackbar('threshold', 'Controls', 0, 255, nothing)
 
-# Set default value for Max HSV trackbars
+cv2.createTrackbar('XBlur', 'Controls', 1, 100, nothing)
+cv2.createTrackbar('YBlur', 'Controls', 1, 100, nothing)
+
+# Set default value for Max HSV/RGB trackbars
 cv2.setTrackbarPos('HMax', 'Controls', 179)
 cv2.setTrackbarPos('SMax', 'Controls', 255)
 cv2.setTrackbarPos('VMax', 'Controls', 255)
-
-# Initialize HSV min/max values
-hMin = sMin = vMin = hMax = sMax = vMax = 0
+cv2.setTrackbarPos('BMax', 'Controls', 255)
+cv2.setTrackbarPos('GMax', 'Controls', 255)
+cv2.setTrackbarPos('RMax', 'Controls', 255)
 
 while True:    
     # Get current positions of all trackbars
@@ -63,6 +66,10 @@ while True:
     BMax = cv2.getTrackbarPos('BMax', 'Controls')
     GMax = cv2.getTrackbarPos('GMax', 'Controls')
     RMax = cv2.getTrackbarPos('RMax', 'Controls')
+
+    XBlur = cv2.getTrackbarPos('XBlur', 'Controls') + 1
+    YBlur = cv2.getTrackbarPos('YBlur', 'Controls') + 1
+
     threshold = cv2.getTrackbarPos('threshold', 'Controls')
 
     BGRlower = np.array([BMin, GMin, RMin])
@@ -78,12 +85,14 @@ while True:
     
     result = cv2.bitwise_and(BGRresult, BGRresult, mask=HSVmask)
     
-    blimage = cv2.blur(result, (3,3))
+
+    blimage = cv2.blur(result, (XBlur, YBlur))
     edges = cv2.Canny(blimage, threshold, threshold*3, 3)
 
     cv2.imshow('Original', image)
     cv2.imshow('Masked', result)
     cv2.imshow('canny', edges)
+    cv2.imshow('blur', blimage)
 
     if cv2.waitKey(10) & 0xFF == ord('q'):
         break
