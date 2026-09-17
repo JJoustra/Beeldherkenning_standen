@@ -41,8 +41,10 @@ cv2.createTrackbar('GMax', 'Controls', 0, 255, nothing)
 cv2.createTrackbar('RMax', 'Controls', 0, 255, nothing)
 cv2.createTrackbar('threshold', 'Controls', 0, 255, nothing)
 
-cv2.createTrackbar('XBlur', 'Controls', 1, 100, nothing)
-cv2.createTrackbar('YBlur', 'Controls', 1, 100, nothing)
+cv2.createTrackbar('Welke_blur', 'Controls', 0, 3 , nothing)
+
+cv2.createTrackbar('XBlur', 'Controls', 1, 50, nothing)
+cv2.createTrackbar('YBlur', 'Controls', 1, 50, nothing)
 
 # Set default value for Max HSV/RGB trackbars
 cv2.setTrackbarPos('HMax', 'Controls', 179)
@@ -67,8 +69,10 @@ while True:
     GMax = cv2.getTrackbarPos('GMax', 'Controls')
     RMax = cv2.getTrackbarPos('RMax', 'Controls')
 
-    XBlur = cv2.getTrackbarPos('XBlur', 'Controls') + 1
-    YBlur = cv2.getTrackbarPos('YBlur', 'Controls') + 1
+    welke_blur = cv2.getTrackbarPos('Welke_blur', 'Controls')
+## +1 want anders kan de blur onder 0 komen en dat geeft een error en *2 want anders kan de blur op een even getal komen en dat geeft een error bij median blur
+    XBlur = cv2.getTrackbarPos('XBlur', 'Controls') *2 + 1
+    YBlur = cv2.getTrackbarPos('YBlur', 'Controls') *2 + 1
 
     threshold = cv2.getTrackbarPos('threshold', 'Controls')
 
@@ -86,7 +90,14 @@ while True:
     result = cv2.bitwise_and(BGRresult, BGRresult, mask=HSVmask)
     
 
-    blimage = cv2.blur(result, (XBlur, YBlur))
+    blimage = result
+    if welke_blur == 1:
+        blimage = cv2.GaussianBlur(result, (XBlur, YBlur), 0)
+    elif welke_blur == 2:
+        blimage = cv2.blur(result, (XBlur, YBlur))
+    elif welke_blur == 3:
+        blimage = cv2.medianBlur(result, XBlur)
+    
     edges = cv2.Canny(blimage, threshold, threshold*3, 3)
 
     cv2.imshow('Original', image)
