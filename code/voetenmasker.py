@@ -33,6 +33,12 @@ cv2.createTrackbar('VMin', 'Controls', 0, 255, nothing)
 cv2.createTrackbar('HMax', 'Controls', 0, 179, nothing)
 cv2.createTrackbar('SMax', 'Controls', 0, 255, nothing)
 cv2.createTrackbar('VMax', 'Controls', 0, 255, nothing)
+cv2.createTrackbar('BMin', 'Controls', 0, 255, nothing)
+cv2.createTrackbar('GMin', 'Controls', 0, 255, nothing)
+cv2.createTrackbar('RMin', 'Controls', 0, 255, nothing)
+cv2.createTrackbar('BMax', 'Controls', 0, 255, nothing)
+cv2.createTrackbar('GMax', 'Controls', 0, 255, nothing)
+cv2.createTrackbar('RMax', 'Controls', 0, 255, nothing)
 cv2.createTrackbar('threshold', 'Controls', 0, 255, nothing)
 
 # Set default value for Max HSV trackbars
@@ -43,7 +49,7 @@ cv2.setTrackbarPos('VMax', 'Controls', 255)
 # Initialize HSV min/max values
 hMin = sMin = vMin = hMax = sMax = vMax = 0
 
-while True:
+while True:    
     # Get current positions of all trackbars
     hMin = cv2.getTrackbarPos('HMin', 'Controls')
     sMin = cv2.getTrackbarPos('SMin', 'Controls')
@@ -51,14 +57,26 @@ while True:
     hMax = cv2.getTrackbarPos('HMax', 'Controls')
     sMax = cv2.getTrackbarPos('SMax', 'Controls')
     vMax = cv2.getTrackbarPos('VMax', 'Controls')
+    BMin = cv2.getTrackbarPos('BMin', 'Controls')
+    GMin = cv2.getTrackbarPos('GMin', 'Controls')
+    RMin = cv2.getTrackbarPos('RMin', 'Controls')
+    BMax = cv2.getTrackbarPos('BMax', 'Controls')
+    GMax = cv2.getTrackbarPos('GMax', 'Controls')
+    RMax = cv2.getTrackbarPos('RMax', 'Controls')
     threshold = cv2.getTrackbarPos('threshold', 'Controls')
 
-    lower = np.array([hMin, sMin, vMin])
-    upper = np.array([hMax, sMax, vMax])
+    BGRlower = np.array([BMin, GMin, RMin])
+    BGRupper = np.array([BMax, GMax, RMax])
+    BGRmask = cv2.inRange(image, BGRlower, BGRupper)
+    BGRresult = cv2.bitwise_and(image, image, mask=BGRmask)
 
+    HSVlower = np.array([hMin, sMin, vMin])
+    HSVupper = np.array([hMax, sMax, vMax])
     hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-    mask = cv2.inRange(hsv, lower, upper)
-    result = cv2.bitwise_and(image, image, mask=mask)
+    HSVmask = cv2.inRange(hsv, HSVlower, HSVupper)
+    #HSVresult = cv2.bitwise_and(image, image, mask=HSVmask)
+    
+    result = cv2.bitwise_and(BGRresult, BGRresult, mask=HSVmask)
     
     blimage = cv2.blur(result, (3,3))
     edges = cv2.Canny(blimage, threshold, threshold*3, 3)
