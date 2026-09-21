@@ -14,7 +14,10 @@ if not files:
 current = -1
 
 # Create windows with small custom sizes
-cv2.namedWindow('Controls', cv2.WINDOW_NORMAL)
+cv2.namedWindow('imgControls', cv2.WINDOW_NORMAL)
+cv2.namedWindow('maskControls', cv2.WINDOW_NORMAL)
+cv2.namedWindow('blurControls', cv2.WINDOW_NORMAL)
+cv2.namedWindow('edgeControls', cv2.WINDOW_NORMAL)
 cv2.namedWindow('Original', cv2.WINDOW_NORMAL)
 cv2.namedWindow('Masked', cv2.WINDOW_NORMAL)
 cv2.namedWindow('canny', cv2.WINDOW_NORMAL)
@@ -24,58 +27,58 @@ cv2.namedWindow('canny', cv2.WINDOW_NORMAL)
 #cv2.resizeWindow('Masked', 500, 350)
 
 # trackbar voor image selectie
-cv2.createTrackbar("img", "Controls", 0, len(files) - 1, nothing)
+cv2.createTrackbar("img", "imgControls", 0, len(files) - 1, nothing)
 # Create trackbars for color change
-cv2.createTrackbar('HMin', 'Controls', 0, 179, nothing)
-cv2.createTrackbar('SMin', 'Controls', 0, 255, nothing)
-cv2.createTrackbar('VMin', 'Controls', 0, 255, nothing)
-cv2.createTrackbar('HMax', 'Controls', 0, 179, nothing)
-cv2.createTrackbar('SMax', 'Controls', 0, 255, nothing)
-cv2.createTrackbar('VMax', 'Controls', 0, 255, nothing)
-cv2.createTrackbar('BMin', 'Controls', 0, 255, nothing)
-cv2.createTrackbar('GMin', 'Controls', 0, 255, nothing)
-cv2.createTrackbar('RMin', 'Controls', 0, 255, nothing)
-cv2.createTrackbar('BMax', 'Controls', 0, 255, nothing)
-cv2.createTrackbar('GMax', 'Controls', 0, 255, nothing)
-cv2.createTrackbar('RMax', 'Controls', 0, 255, nothing)
-cv2.createTrackbar('threshold', 'Controls', 0, 255, nothing)
+cv2.createTrackbar('HMin', 'maskControls', 0, 179, nothing)
+cv2.createTrackbar('SMin', 'maskControls', 0, 255, nothing)
+cv2.createTrackbar('VMin', 'maskControls', 0, 255, nothing)
+cv2.createTrackbar('HMax', 'maskControls', 0, 179, nothing)
+cv2.createTrackbar('SMax', 'maskControls', 0, 255, nothing)
+cv2.createTrackbar('VMax', 'maskControls', 0, 255, nothing)
+cv2.createTrackbar('BMin', 'maskControls', 0, 255, nothing)
+cv2.createTrackbar('GMin', 'maskControls', 0, 255, nothing)
+cv2.createTrackbar('RMin', 'maskControls', 0, 255, nothing)
+cv2.createTrackbar('BMax', 'maskControls', 0, 255, nothing)
+cv2.createTrackbar('GMax', 'maskControls', 0, 255, nothing)
+cv2.createTrackbar('RMax', 'maskControls', 0, 255, nothing)
+cv2.createTrackbar('threshold', 'edgeControls', 0, 255, nothing)
 # trackbar voor blur selectie
-cv2.createTrackbar('Welke_blur', 'Controls', 0, 3 , nothing)
+cv2.createTrackbar('Welke_blur', 'blurControls', 0, 3 , nothing)
 # trackbars voor blur instellingen
-cv2.createTrackbar('XBlur', 'Controls', 1, 50, nothing)
-cv2.createTrackbar('YBlur', 'Controls', 1, 50, nothing)
+cv2.createTrackbar('XBlur', 'blurControls', 1, 50, nothing)
+cv2.createTrackbar('YBlur', 'blurControls', 1, 50, nothing)
 
 # Set default value for Max HSV/RGB trackbars
-cv2.setTrackbarPos('HMax', 'Controls', 179)
-cv2.setTrackbarPos('SMax', 'Controls', 255)
-cv2.setTrackbarPos('VMax', 'Controls', 255)
-cv2.setTrackbarPos('BMax', 'Controls', 255)
-cv2.setTrackbarPos('GMax', 'Controls', 255)
-cv2.setTrackbarPos('RMax', 'Controls', 255)
+cv2.setTrackbarPos('HMax', 'maskControls', 179)
+cv2.setTrackbarPos('SMax', 'maskControls', 255)
+cv2.setTrackbarPos('VMax', 'maskControls', 255)
+cv2.setTrackbarPos('BMax', 'maskControls', 255)
+cv2.setTrackbarPos('GMax', 'maskControls', 255)
+cv2.setTrackbarPos('RMax', 'maskControls', 255)
 
 while True:    
     # Get current positions of all trackbars
-    hMin = cv2.getTrackbarPos('HMin', 'Controls')
-    sMin = cv2.getTrackbarPos('SMin', 'Controls')
-    vMin = cv2.getTrackbarPos('VMin', 'Controls')
-    hMax = cv2.getTrackbarPos('HMax', 'Controls')
-    sMax = cv2.getTrackbarPos('SMax', 'Controls')
-    vMax = cv2.getTrackbarPos('VMax', 'Controls')
-    BMin = cv2.getTrackbarPos('BMin', 'Controls')
-    GMin = cv2.getTrackbarPos('GMin', 'Controls')
-    RMin = cv2.getTrackbarPos('RMin', 'Controls')
-    BMax = cv2.getTrackbarPos('BMax', 'Controls')
-    GMax = cv2.getTrackbarPos('GMax', 'Controls')
-    RMax = cv2.getTrackbarPos('RMax', 'Controls')
+    hMin = cv2.getTrackbarPos('HMin', 'maskControls')
+    sMin = cv2.getTrackbarPos('SMin', 'maskControls')
+    vMin = cv2.getTrackbarPos('VMin', 'maskControls')
+    hMax = cv2.getTrackbarPos('HMax', 'maskControls')
+    sMax = cv2.getTrackbarPos('SMax', 'maskControls')
+    vMax = cv2.getTrackbarPos('VMax', 'maskControls')
+    BMin = cv2.getTrackbarPos('BMin', 'maskControls')
+    GMin = cv2.getTrackbarPos('GMin', 'maskControls')
+    RMin = cv2.getTrackbarPos('RMin', 'maskControls')
+    BMax = cv2.getTrackbarPos('BMax', 'maskControls')
+    GMax = cv2.getTrackbarPos('GMax', 'maskControls')
+    RMax = cv2.getTrackbarPos('RMax', 'maskControls')
 
-    welke_blur = cv2.getTrackbarPos('Welke_blur', 'Controls')
+    welke_blur = cv2.getTrackbarPos('Welke_blur', 'blurControls')
 ## +1 want anders kan de blur onder 0 komen en dat geeft een error en *2 want anders kan de blur op een even getal komen en dat geeft een error bij median blur
-    XBlur = cv2.getTrackbarPos('XBlur', 'Controls') *2 + 1
-    YBlur = cv2.getTrackbarPos('YBlur', 'Controls') *2 + 1
+    XBlur = cv2.getTrackbarPos('XBlur', 'blurControls') *2 + 1
+    YBlur = cv2.getTrackbarPos('YBlur', 'blurControls') *2 + 1
 
-    threshold = cv2.getTrackbarPos('threshold', 'Controls')
+    threshold = cv2.getTrackbarPos('threshold', 'edgeControls')
 
-    idx = cv2.getTrackbarPos("img", "Controls")
+    idx = cv2.getTrackbarPos("img", "imgControls")
 
     if idx != current:
             image = cv2.imread(str(files[idx]))
