@@ -12,9 +12,6 @@ files = sorted(Path("test_fotos").rglob("*.jpg"))
 if not files:
     raise SystemExit("No images found")
 current = -1
-cv2.namedWindow("bars", cv2.WINDOW_NORMAL)
-cv2.namedWindow("loaded_image", cv2.WINDOW_NORMAL)
-cv2.createTrackbar("img", "bars", 0, len(files) - 1, nothing)
 
 # Create windows with small custom sizes
 cv2.namedWindow('Controls', cv2.WINDOW_NORMAL)
@@ -26,6 +23,8 @@ cv2.namedWindow('canny', cv2.WINDOW_NORMAL)
 #cv2.resizeWindow('Original', 500, 350)
 #cv2.resizeWindow('Masked', 500, 350)
 
+# trackbar voor image selectie
+cv2.createTrackbar("img", "Controls", 0, len(files) - 1, nothing)
 # Create trackbars for color change
 cv2.createTrackbar('HMin', 'Controls', 0, 179, nothing)
 cv2.createTrackbar('SMin', 'Controls', 0, 255, nothing)
@@ -40,9 +39,9 @@ cv2.createTrackbar('BMax', 'Controls', 0, 255, nothing)
 cv2.createTrackbar('GMax', 'Controls', 0, 255, nothing)
 cv2.createTrackbar('RMax', 'Controls', 0, 255, nothing)
 cv2.createTrackbar('threshold', 'Controls', 0, 255, nothing)
-
+# trackbar voor blur selectie
 cv2.createTrackbar('Welke_blur', 'Controls', 0, 3 , nothing)
-
+# trackbars voor blur instellingen
 cv2.createTrackbar('XBlur', 'Controls', 1, 50, nothing)
 cv2.createTrackbar('YBlur', 'Controls', 1, 50, nothing)
 
@@ -76,7 +75,7 @@ while True:
 
     threshold = cv2.getTrackbarPos('threshold', 'Controls')
 
-    idx = cv2.getTrackbarPos("img", "bars")
+    idx = cv2.getTrackbarPos("img", "Controls")
 
     if idx != current:
             image = cv2.imread(str(files[idx]))
