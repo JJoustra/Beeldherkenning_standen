@@ -107,10 +107,14 @@ while True:
         blimage = cv2.medianBlur(result, XBlur)
     
     edges = cv2.Canny(blimage, threshold, threshold*3, 3)
-
+    sobelx = cv2.Sobel(edges,cv2.CV_64F,1,0,ksize=5)
+    sobely = cv2.Sobel(edges,cv2.CV_64F,0,1,ksize=5)
+    
     cv2.imshow('Original', image)
     cv2.imshow('Masked', result)
     cv2.imshow('canny', edges)
+    cv2.imshow('x_sobel', edges)
+    cv2.imshow('y_sobel', edges)
     cv2.imshow('blur', blimage)
 
     if cv2.waitKey(30) & 0xFF == 27:   # Esc to exit
