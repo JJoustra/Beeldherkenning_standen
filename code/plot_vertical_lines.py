@@ -49,24 +49,62 @@ kernel = np.array([
     [0,0,0,0,0,0,0,0,0]
 ], dtype=np.float32)
 
-i=1
-thr = 34
+#init index telvariabel
+idx=1
+#vaste defines voor de masks en thresholding
+thr = 38
+hMin = 0
+sMin = 0
+vMin = 121
+hMax = 255
+sMax = 255
+vMax = 255
+BMin = 23
+GMin = 54
+RMin = 50
+BMax = 255
+GMax = 255
+RMax = 255
+ksize = 3
+folder = 0
+#main loop, bouwt het dataframe
 for filepath in files:
     print("processing file:")
     print(filepath.parent.name)
-    print(i)
-    i = i+1
+    print(filepath.parent.parent.name)
+    print(idx)
+    idx = idx+1
+    if folder != filepath.parent.name:
+        folder = filepath.parent.name
+        idx = 0
     image = cv2.imread(filepath)
-    edges = cv2.Canny(image, thr, thr*3, 3)
+    
+    BGRlower = np.array([BMin, GMin, RMin])
+    BGRupper = np.array([BMax, GMax, RMax])
+    BGRmask = cv2.inRange(image, BGRlower, BGRupper)
+    BGRresult = cv2.bitwise_and(image, image, mask=BGRmask)
+    HSVlower = np.array([hMin, sMin, vMin])
+    HSVupper = np.array([hMax, sMax, vMax])
+    hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    HSVmask = cv2.inRange(hsv, HSVlower, HSVupper)
+    
+    result = cv2.bitwise_and(BGRresult, BGRresult, mask=HSVmask)
+    
+    edges = cv2.Canny(result, thr, thr*3, 3)
     filtered = cv2.filter2D(edges, ddepth=-1, kernel=kernel)
     whitePix = np.sum(filtered == 255)
 
     imgData = pd.DataFrame({
+        "index": idx,
         "folder": [filepath.parent.name],
         "vertCount": [whitePix]
     })
     data = pd.concat([data, imgData])
     
+data.to_csv("out.csv", index=False)
 print("done")
+
+
+
 sns.violinplot(data=data, x="folder", y="vertCount", inner="quart")
     
