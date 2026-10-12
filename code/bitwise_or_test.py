@@ -111,7 +111,8 @@ while True:
 
     result = cv2.hconcat([pakmask(image), skinmask(image)])
     both = cv2.bitwise_or(pakmask(image), skinmask(image), mask=None)
-    
+    both = cv2.cvtColor(both, cv2.COLOR_BGR2GRAY)
+    both = result = np.where(both != 0, 255, 0).astype(np.uint8)
     blimage = result
     if welke_blur == 1:
         blimage = cv2.GaussianBlur(result, (XBlur, YBlur), 0)
@@ -127,7 +128,7 @@ while True:
     cv2.imshow('Original', image)
     cv2.imshow('Masked', both)
     cv2.imshow('canny', edges)
-    cv2.imshow('x_sobel', edges)
+    cv2.imshow('x_sobel', result)
     cv2.imshow('y_sobel', edges)
     cv2.imshow('blur', blimage)
 
