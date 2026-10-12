@@ -1,17 +1,27 @@
 import cv2 
 import numpy as np
+
 from pathlib import Path
+from matplotlib import pyplot as plt
+
 
 
 def nothing(x):
     pass
 
+kernel = np.ones((5,5),np.uint8)
+
+element = cv2.getStructuringElement(cv2.MORPH_CROSS, (3,3))
+
+color = ('b','g','r')
 
 # Build the file list once
 files = sorted(Path("test_fotos").rglob("*.jpg"))
 if not files:
     raise SystemExit("No images found")
 current = -1
+
+
 
 # Create windows with small custom sizes
 cv2.namedWindow('imgControls', cv2.WINDOW_NORMAL)
@@ -21,8 +31,9 @@ cv2.namedWindow('edgeControls', cv2.WINDOW_NORMAL)
 cv2.namedWindow('Original', cv2.WINDOW_NORMAL)
 cv2.namedWindow('Masked', cv2.WINDOW_NORMAL)
 cv2.namedWindow('canny', cv2.WINDOW_NORMAL)
+cv2.namedWindow('itterations', cv2.WINDOW_NORMAL)
 
-#cv2.resizeWindow('Controls', 420, 200)
+cv2.resizeWindow('imgControls', 1000, 0)
 #cv2.resizeWindow('Original', 500, 350)
 #cv2.resizeWindow('Masked', 500, 350)
 
@@ -41,12 +52,19 @@ cv2.createTrackbar('RMin', 'maskControls', 0, 255, nothing)
 cv2.createTrackbar('BMax', 'maskControls', 0, 255, nothing)
 cv2.createTrackbar('GMax', 'maskControls', 0, 255, nothing)
 cv2.createTrackbar('RMax', 'maskControls', 0, 255, nothing)
+
+#edgeControls
 cv2.createTrackbar('threshold', 'edgeControls', 0, 255, nothing)
 # trackbar voor blur selectie
+#blurControls
 cv2.createTrackbar('Welke_blur', 'blurControls', 0, 3 , nothing)
+
 # trackbars voor blur instellingen
 cv2.createTrackbar('XBlur', 'blurControls', 1, 50, nothing)
 cv2.createTrackbar('YBlur', 'blurControls', 1, 50, nothing)
+
+#cv2.createTrackbar('Iterations', 'itterations', 1, 100, nothing)
+
 
 # Set default value for Max HSV/RGB trackbars
 cv2.setTrackbarPos('HMax', 'maskControls', 179)
@@ -55,6 +73,7 @@ cv2.setTrackbarPos('VMax', 'maskControls', 255)
 cv2.setTrackbarPos('BMax', 'maskControls', 255)
 cv2.setTrackbarPos('GMax', 'maskControls', 255)
 cv2.setTrackbarPos('RMax', 'maskControls', 255)
+
 
 while True:    
     # Get current positions of all trackbars
@@ -82,8 +101,13 @@ while True:
 
     if idx != current:
             image = cv2.imread(str(files[idx]))
+            if image is None:
+                raise OSError(f"Could not read image: {files[idx]}")
 
             current = idx
+
+    iterations = cv2.getTrackbarPos('Iterations', 'itterations')
+
 
     BGRlower = np.array([BMin, GMin, RMin])
     BGRupper = np.array([BMax, GMax, RMax])
@@ -97,8 +121,9 @@ while True:
     #HSVresult = cv2.bitwise_and(image, image, mask=HSVmask)
     
     result = cv2.bitwise_and(BGRresult, BGRresult, mask=HSVmask)
-    
+
     blimage = result
+    
     if welke_blur == 1:
         blimage = cv2.GaussianBlur(result, (XBlur, YBlur), 0)
     elif welke_blur == 2:
@@ -107,17 +132,54 @@ while True:
         blimage = cv2.medianBlur(result, XBlur)
     
     edges = cv2.Canny(blimage, threshold, threshold*3, 3)
-    sobelx = cv2.Sobel(edges,cv2.CV_64F,1,0,ksize=5)
-    sobely = cv2.Sobel(edges,cv2.CV_64F,0,1,ksize=5)
-    
-    cv2.imshow('Original', image)
-    cv2.imshow('Masked', result)
-    cv2.imshow('canny', edges)
-    cv2.imshow('x_sobel', edges)
-    cv2.imshow('y_sobel', edges)
-    cv2.imshow('blur', blimage)
+   # sobelx = cv2.Sobel(edges,cv2.CV_64F,1,0,ksize=5)
+   # sobely = cv2.Sobel(edges,cv2.CV_64F,0,1,ksize=5)
+   
+    image_gray = cv2.cvtColor(blimage, cv2.COLOR_BGR2GRAY)
+        # Threshold the image
+    ret,image_gray = cv2.threshold(image_gray, 127, 255, 0)
+    # Step 1: Create an empty skeleton
+    size = np.size(image_gray)
+    skel = np.zeros(image_gray.shape, np.uint8)
 
-    if cv2.waitKey(30) & 0xFF == 27:   # Esc to exit
+    
+        # Repeat steps 2-4
+    while True:
+        #Step 2: Open the image
+        open = cv2.morphologyEx(image_gray, cv2.MORPH_OPEN, element)
+        #Step 3: Substract open from the original image
+        temp = cv2.subtract(image_gray, open)
+        #Step 4: Erode the original image and refine the skeleton
+        erosion = cv2.erode(image_gray, element)
+        skel = cv2.bitwise_or(skel,temp)
+        image_gray = erosion.copy()
+
+        print("nonzero", cv2.countNonZero(image_gray))
+        # Step 5: If there are no white pixels left ie.. the image has been completely eroded, quit the loop
+        if cv2.countNonZero(image_gray)==0:
+            break
+
+
+
+
+   # cv2.imshow('skeleton', skel)
+   # cv2.imshow('Original', image)
+   # cv2.imshow('Masked', result)
+   # cv2.imshow('canny', edges)
+   # cv2.imshow('x_sobel', edges)
+   # cv2.imshow('y_sobel', edges)
+   # cv2.imshow('blur', blimage)
+   # cv2.imshow('erosion', erosion)
+
+    im_r = cv2.hconcat([skel,edges,])
+    r_im_r = cv2.resize(im_r, (1920, 1080))
+    cv2.imshow('man_image.jpeg', r_im_r)
+
+    im_h = cv2.hconcat([image, blimage,result,])
+    r_im_h = cv2.resize(im_h, (1920, 1080))
+    cv2.imshow('man_image.jpeg2', r_im_h)
+
+    if cv2.waitKey(80) & 0xFF == 27:   # Esc to exit
         break
 
 cv2.destroyAllWindows()
