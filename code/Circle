@@ -1,0 +1,45 @@
+import numpy as np
+import cv2
+
+def nothing(_value):
+    pass
+
+cv2.namedWindow('Controls', cv2.WINDOW_NORMAL)
+cv2.resizeWindow('Controls', 420, 200)
+# Create trackbars for color change
+
+cv2.createTrackbar('param1', 'Controls', 0, 255, nothing)
+cv2.createTrackbar('param2', 'Controls', 0, 255, nothing)
+cv2.createTrackbar('minRadius', 'Controls', 0, 255, nothing)
+cv2.createTrackbar('maxRadius', 'Controls', 0, 255, nothing)
+
+# Set default value for Max RGB trackbars
+cv2.setTrackbarPos('param1', 'Controls', 100)
+cv2.setTrackbarPos('param2', 'Controls', 30)
+cv2.setTrackbarPos('minRadius', 'Controls', 10)
+cv2.setTrackbarPos('maxRadius', 'Controls', 200)
+
+img = cv2.imread('/Users/slashure/Beeldherkenning_standen/test_foto\'s/Shiko_Dachi/ezgif-frame-001.jpg',0)
+img = cv2.medianBlur(img,5)
+cimg = cv2.cvtColor(img,cv2.COLOR_GRAY2BGR)
+
+while True:
+    p1 = cv2.getTrackbarPos('param1', 'Controls')
+    p2 = cv2.getTrackbarPos('param2', 'Controls')
+    min = cv2.getTrackbarPos('minRadius', 'Controls')
+    max = cv2.getTrackbarPos('maxRadius', 'Controls')
+    circles = cv2.HoughCircles(img,cv2.HOUGH_GRADIENT,1,20,
+                                param1=p1,param2=p2,minRadius=min,maxRadius=max)
+    circles = np.uint16(np.around(circles))
+    for i in circles[0,:]:
+        # draw the outer circle
+        cv2.circle(cimg,(i[0],i[1]),i[2],(0,255,0),2)
+        # draw the center of the circle
+        cv2.circle(cimg,(i[0],i[1]),2,(0,0,255),3)
+
+    cv2.imshow('detected circles',cimg)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
+
+
