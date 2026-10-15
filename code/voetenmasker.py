@@ -1,13 +1,20 @@
-import cv2
+import cv2 as cv
 import numpy as np
-
-img = cv2.imread('/Users/slashure/Documents/Karate stands test fotos/Shiko Dachi/ezgif-64f0cbd5682587da-jpg/ezgif-frame-009.jpg')
-gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-edges = cv2.Canny(gray,50,150,apertureSize = 3)
-minLineLength = 100
-maxLineGap = 10
-lines = cv2.HoughLinesP(edges,1,np.pi/180,100,minLineLength,maxLineGap)
-for x1,y1,x2,y2 in lines[0]:
-    cv2.line(img,(x1,y1),(x2,y2),(0,255,0),2)
-
-cv2.imwrite('houghlines5.jpg',img)
+ 
+img = cv.imread(cv.samples.findFile('/Users/slashure/Downloads/Pasted 2026-10-12 at 1.29.32 PM.png'))
+gray = cv.cvtColor(img,cv.COLOR_BGR2GRAY)
+edges = cv.Canny(gray,50,150,apertureSize = 3)
+lines = cv.HoughLines(edges,1,np.pi/180,200)
+for line in lines:
+    rho,theta = line[0]
+    a = np.cos(theta)
+    b = np.sin(theta)
+    x0 = a*rho
+    y0 = b*rho
+    x1 = int(x0 + 1000*(-b))
+    y1 = int(y0 + 1000*(a))
+    x2 = int(x0 - 1000*(-b))
+    y2 = int(y0 - 1000*(a))
+ 
+    cv.line(img,(x1,y1),(x2,y2),(0,0,255),2)
+cv.imwrite('houghlines5.jpg',img)

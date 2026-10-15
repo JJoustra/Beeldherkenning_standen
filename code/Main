@@ -1,0 +1,165 @@
+from unittest import result
+
+import cv2 
+import numpy as np
+from pathlib import Path
+from matplotlib import pyplot as plt
+
+def pakmask(image):
+    hMin = 0
+    sMin = 0
+    vMin = 121
+    hMax = 255
+    sMax = 255
+    vMax = 255
+    BMin = 23
+    GMin = 54
+    RMin = 50
+    BMax = 255
+    GMax = 255
+    RMax = 255
+    BGRlower = np.array([BMin, GMin, RMin])
+    BGRupper = np.array([BMax, GMax, RMax])
+    BGRmask = cv2.inRange(image, BGRlower, BGRupper)
+    BGRresult = cv2.bitwise_and(image, image, mask=BGRmask)
+    
+    HSVlower = np.array([hMin, sMin, vMin])
+    HSVupper = np.array([hMax, sMax, vMax])
+    hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    HSVmask = cv2.inRange(hsv, HSVlower, HSVupper)
+    
+    result = cv2.bitwise_and(BGRresult, BGRresult, mask=HSVmask)
+    return (result)
+
+def skinmask(image):
+    hMin = 0
+    sMin = 35
+    vMin = 43
+    hMax = 26
+    sMax = 255
+    vMax = 255
+    BMin = 17
+    GMin = 21
+    RMin = 47
+    BMax = 179
+    GMax = 199
+    RMax = 255
+    BGRlower = np.array([BMin, GMin, RMin])
+    BGRupper = np.array([BMax, GMax, RMax])
+    BGRmask = cv2.inRange(image, BGRlower, BGRupper)
+    BGRresult = cv2.bitwise_and(image, image, mask=BGRmask)
+    HSVlower = np.array([hMin, sMin, vMin])
+    HSVupper = np.array([hMax, sMax, vMax])
+    hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    HSVmask = cv2.inRange(hsv, HSVlower, HSVupper)
+    
+    result = cv2.bitwise_and(BGRresult, BGRresult, mask=HSVmask)
+    return (result)
+
+# def blur(both, kernel_size):
+#     blimage =  cv2.medianBlur(both, 7) # image,kernel size
+#     return (blimage)
+
+def nothing(x):
+    pass
+
+kernel = np.ones((5,5),np.uint8)
+element = cv2.getStructuringElement(cv2.MORPH_CROSS, (3,3))
+color = ('b','g','r')
+
+# Build the file list once
+files = sorted(Path("test_fotos").rglob("*.jpg"))
+if not files:
+    raise SystemExit("No images found")
+current = -1
+
+# Create windows with small custom sizes
+cv2.namedWindow('imgControls', cv2.WINDOW_NORMAL)
+cv2.resizeWindow('imgControls', 1000, 0)
+
+# trackbar voor image selectie
+cv2.createTrackbar("img", "imgControls", 0, len(files) - 1, nothing)
+
+while True:    
+
+    welke_blur = cv2.getTrackbarPos('Welke_blur', 'blurControls')
+## +1 want anders kan de blur onder 0 komen en dat geeft een error en *2 want anders kan de blur op een even getal komen en dat geeft een error bij median blur
+    XBlur = cv2.getTrackbarPos('XBlur', 'blurControls') *2 + 1
+    YBlur = cv2.getTrackbarPos('YBlur', 'blurControls') *2 + 1
+
+    threshold = cv2.getTrackbarPos('threshold', 'edgeControls')
+
+    idx = cv2.getTrackbarPos("img", "imgControls")
+
+    if idx != current:
+            image = cv2.imread(str(files[idx]))
+            if image is None:
+                raise OSError(f"Could not read image: {files[idx]}")
+
+            current = idx
+
+    result = cv2.hconcat([pakmask(image), skinmask(image)])
+    both = cv2.bitwise_or(pakmask(image), skinmask(image), mask=None)
+
+    both = cv2.cvtColor(both, cv2.COLOR_BGR2GRAY)
+    both = np.where(both != 0, 255, 0).astype(np.uint8)
+    blimage =  cv2.medianBlur(both, 63) # image,kernel size
+    image_gray = both
+        # Threshold the image
+    ret,image_gray = cv2.threshold(blimage, 127, 255, 0)
+    # Step 1: Create an empty skeleton
+    size = np.size(image_gray)
+    skel = np.zeros(image_gray.shape, np.uint8)
+    
+        # Repeat steps 2-4
+    while True:
+        #Step 2: Open the image
+        open = cv2.morphologyEx(image_gray, cv2.MORPH_OPEN, element)
+        #Step 3: Substract open from the original image
+        temp = cv2.subtract(image_gray, open)
+        #Step 4: Erode the original image and refine the skeleton
+        erosion = cv2.erode(image_gray, element)
+        skel = cv2.bitwise_or(skel,temp)
+        image_gray = erosion.copy()
+
+        print("nonzero", cv2.countNonZero(image_gray))
+        # Step 5: If there are no white pixels left ie.. the image has been completely eroded, quit the loop
+        if cv2.countNonZero(image_gray)==0:
+            break
+
+
+    lines = cv2.HoughLines(skel,1.1,np.pi/180,200) #image, rho, theta, threshold[, lines[, srn[, stn[, min_theta[, max_theta[, use_edgeval]]]]]])
+    if lines is None:
+        print("No lines found")
+    else:
+        for line in lines:
+            rho,theta = line[0]
+            a = np.cos(theta)
+            b = np.sin(theta)
+            x0 = a*rho
+            y0 = b*rho
+            x1 = int(x0 + 1000*(-b))
+            y1 = int(y0 + 1000*(a))
+            x2 = int(x0 - 1000*(-b))
+            y2 = int(y0 - 1000*(a))
+        
+            cv2.line(skel,(x1,y1),(x2,y2),(200,255,255),1)
+
+    im_r = cv2.hconcat([skel,blimage,both])
+    r_im_r = cv2.resize(im_r, (1920, 1080))
+    cv2.imshow('man_image.jpeg', r_im_r)
+
+    im_h = cv2.hconcat([image,result,])
+    r_im_h = cv2.resize(im_h, (1920, 1080))
+    cv2.imshow('man_image.jpeg2', r_im_h)
+
+    while True:
+        if cv2.waitKey(80) & 0xFF == 27:   # Esc to exit
+            break
+
+    if cv2.waitKey(80) & 0xFF == 27:   # Esc to exit
+            break
+
+
+
+cv2.destroyAllWindows()
