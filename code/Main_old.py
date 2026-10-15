@@ -160,6 +160,19 @@ while True:
             break
 
 
+    lines = cv2.HoughLines(skel,1.1,np.pi/180,200)
+    for line in lines:
+        rho,theta = line[0]
+        a = np.cos(theta)
+        b = np.sin(theta)
+        x0 = a*rho
+        y0 = b*rho
+        x1 = int(x0 + 1000*(-b))
+        y1 = int(y0 + 1000*(a))
+        x2 = int(x0 - 1000*(-b))
+        y2 = int(y0 - 1000*(a))
+        
+        cv2.line(skel,(x1,y1),(x2,y2),(0,0,255),2)
 
 
    # cv2.imshow('skeleton', skel)
@@ -170,6 +183,7 @@ while True:
    # cv2.imshow('y_sobel', edges)
    # cv2.imshow('blur', blimage)
    # cv2.imshow('erosion', erosion)
+
 
     im_r = cv2.hconcat([skel,edges,])
     r_im_r = cv2.resize(im_r, (1920, 1080))
