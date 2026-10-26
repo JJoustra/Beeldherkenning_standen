@@ -107,11 +107,12 @@ while True:
     both = np.where(both != 0, 255, 0).astype(np.uint8)
 
   
-     blimage =  cv2.medianBlur(both, 85) # image,kernel size
+    blimage =  cv2.medianBlur(both, 85) # image,kernel size
     
     image_gray = both
         # Threshold the image
     ret,image_gray = cv2.threshold(blimage, 127, 255, 0)
+
     # Step 1: Create an empty skeleton
     size = np.size(image_gray)
     skel = np.zeros(image_gray.shape, np.uint8)
@@ -128,7 +129,10 @@ while True:
         image_gray = erosion.copy()
 
         print("nonzero", cv2.countNonZero(image_gray))
+
         # Step 5: If there are no white pixels left ie.. the image has been completely eroded, quit the loop
+        whiteP = np.sum(skel==255)
+        print("white pixels", whiteP)
         if cv2.countNonZero(image_gray)==0:
             break
 
