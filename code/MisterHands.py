@@ -8,6 +8,7 @@ Created on Thu Oct 15 14:09:48 2026
 import cv2
 import numpy as np
 from pathlib import Path
+import math
 
 def skinmask(image):
     hMin = 0
@@ -50,9 +51,20 @@ def pakmask(image):
 def nothing(x):
     pass
 
+def pythagoras(x1, x2, y1, y2):
+    if x1 > x2:
+        a = x1 - x2
+    else:
+        a = x2 - x1
+        
+    if y1 > y2:
+        b = y1 - y2
+    else:
+        b = y2 - y1
+    c = math.sqrt(a**2 + b**2)
+    return (c)
 
-
-files = sorted(Path("test_fotos").rglob("*.jpg"))
+files = sorted(Path("test_fotos/training").rglob("*.jpg"))
 if not files:
     raise SystemExit("No images found")
     
@@ -70,12 +82,7 @@ while True:
         image = cv2.imread(str(files[idx]))
         if image is not None:
             cv2.imshow("loaded_image", image)
-        current = idx
-    
-    # TODO: VIND GROOTSTE CONTOUR EN ZET ALLE PIXELS ERBUITEN OP 0
-    #voeg beide maskers samen
-    both = cv2.bitwise_or(pakmask(image), skinmask(image), mask=None)
-    
+        current = idx    
 
     masked = skinmask(image)
     gray= cv2.cvtColor(masked,cv2.COLOR_BGR2GRAY)  
@@ -89,20 +96,33 @@ while True:
         )
     sorted_contours= sorted(contours, key=cv2.contourArea, reverse= True)
     
-    item1= sorted_contours[0]
-    M= cv2.moments(item1)
-
-    x,y,w,h= cv2.boundingRect(item1)    
-    x1= x     
-    x2= x + w    
-    y1 = y
-    y2 = y + h
-    cv2.line(masked, (x1, y1), (x2, y2),(0,255,0),2)
-    cv2.line(masked, (x1, y1), (x2, y1),(0,255,0),2)
-    cv2.line(masked, (x2, y1), (x2, y2),(0,255,0),2)
-    cv2.line(masked, (x2, y2), (x1, y2),(0,255,0),2)
-    cv2.line(masked, (x1, y2), (x1, y1),(0,255,0),2)
+    #check of er genoeg contours in de foto zijn, voor als een hand/voet buiten beeld was
+    if len(contours) > 6:
+        num = 6
+    else:
+        num = len(contours)            
     
+    #pak de coördinaten van alle uiterste punten van de vorm
+    #doet dit voor iedere contour of max de 6 grootste contours
+    x1 = np.array([0, 0, 0, 0, 0, 0])
+    x2 = np.array([0, 0, 0, 0, 0, 0])
+    y1 = np.array([0, 0, 0, 0, 0, 0])
+    y2 = np.array([0, 0, 0, 0, 0, 0])
+    for i in range(0, num):
+        x,y,w,h= cv2.boundingRect(sorted_contours[i])    
+        x1[i] = x     
+        x2[i] = x + w    
+        y1[i] = y
+        y2[i] = y + h
+        cv2.line(masked, (x1[i], y1[i]), (x2[i], y2[i]),(0,255,0),2)
+        cv2.line(masked, (x1[i], y1[i]), (x2[i], y1[i]),(0,255,0),2)
+        cv2.line(masked, (x2[i], y1[i]), (x2[i], y2[i]),(0,255,0),2)
+        cv2.line(masked, (x2[i], y2[i]), (x1[i], y2[i]),(0,255,0),2)
+        cv2.line(masked, (x1[i], y2[i]), (x1[i], y1[i]),(0,255,0),2)
+    
+    for i in range(1, len(x1)):
+        cv2.line(masked, (x1[0], y1[0]), (x1[i], y1[i]), (0,0,255),1)
+        print(pythagoras(x1[0], y1[0], x1[i], y1[i]))
     cv2.imshow("edges", edges)
     cv2.imshow("line_on_big_shape", masked)
 
