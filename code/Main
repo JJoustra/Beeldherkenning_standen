@@ -5,6 +5,7 @@ import numpy as np
 from pathlib import Path
 from matplotlib import pyplot as plt
 
+#define the pakmask values
 def pakmask(image):
     hMin = 0
     sMin = 0
@@ -30,7 +31,7 @@ def pakmask(image):
     
     result = cv2.bitwise_and(BGRresult, BGRresult, mask=HSVmask)
     return (result)
-
+#define the skimask values
 def skinmask(image):
     hMin = 0
     sMin = 35
@@ -60,6 +61,7 @@ def skinmask(image):
 #     blimage =  cv2.medianBlur(both, 7) # image,kernel size
 #     return (blimage)
 
+#define the nothing function for trackbar
 def nothing(x):
     pass
 
@@ -99,14 +101,18 @@ while True:
             current = idx
 
     result = cv2.hconcat([pakmask(image), skinmask(image)])
+    #hier worden de masks samengevoegd en omgezet naar grijswaarden zodat de hough lines functie er op kan werken
     both = cv2.bitwise_or(pakmask(image), skinmask(image), mask=None)
-
     both = cv2.cvtColor(both, cv2.COLOR_BGR2GRAY)
     both = np.where(both != 0, 255, 0).astype(np.uint8)
-    blimage =  cv2.medianBlur(both, 63) # image,kernel size
+
+  
+    blimage =  cv2.medianBlur(both, 85) # image,kernel size
+    
     image_gray = both
         # Threshold the image
     ret,image_gray = cv2.threshold(blimage, 127, 255, 0)
+
     # Step 1: Create an empty skeleton
     size = np.size(image_gray)
     skel = np.zeros(image_gray.shape, np.uint8)
@@ -123,11 +129,15 @@ while True:
         image_gray = erosion.copy()
 
         print("nonzero", cv2.countNonZero(image_gray))
+
         # Step 5: If there are no white pixels left ie.. the image has been completely eroded, quit the loop
+        whiteP = np.sum(skel==255)
+        print("white pixels", whiteP)
         if cv2.countNonZero(image_gray)==0:
             break
 
 
+    #hough lines function 
     lines = cv2.HoughLines(skel,1.1,np.pi/180,200) #image, rho, theta, threshold[, lines[, srn[, stn[, min_theta[, max_theta[, use_edgeval]]]]]])
     if lines is None:
         print("No lines found")
@@ -145,6 +155,7 @@ while True:
         
             cv2.line(skel,(x1,y1),(x2,y2),(200,255,255),1)
 
+    #concatenate the images horizontally and resize to fit the screen
     im_r = cv2.hconcat([skel,blimage,both])
     r_im_r = cv2.resize(im_r, (1920, 1080))
     cv2.imshow('man_image.jpeg', r_im_r)
@@ -160,6 +171,6 @@ while True:
     if cv2.waitKey(80) & 0xFF == 27:   # Esc to exit
             break
 
-
-
 cv2.destroyAllWindows()
+
+# ff kijken hoe het eruit als je theta gaat plotten in zon ronde grafiek ennzo
