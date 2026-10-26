@@ -42,32 +42,14 @@ def pythagoras(x1, x2, y1, y2):
     c = math.sqrt(a**2 + b**2)
     return (c)
 
-#globale variabelen ===========================================================
-files = sorted(Path("test_fotos/training").rglob("*.jpg"))
-if not files:
-    raise SystemExit("No images found")
-data = pd.dataFrame()
-    
-#main logica loop =============================================================
-for idx in range(0, len(files)):
-    
-    #fetch paden voor voor- en zijaanzicht
-    #deze logica heeft de meeste moeite gekost van dit hele project
-    path = files[idx]
-    if path.parent.name == "Zij":
-        continue
-    imageF = cv2.imread(path)           #front view
-    imageS = cv2.imread(files[idx+200]) #side view
-    print("reading:")
-    print(path.parent.name)
-    
-    masked = skinmask(imageF)
+def getDistances(image):
+    masked = skinmask(image)
     gray= cv2.cvtColor(masked,cv2.COLOR_BGR2GRAY)  
     blimage =  cv2.medianBlur(gray, 63)
     edges= cv2.Canny(blimage, 50,200)
     
     contours, hierarchy= cv2.findContours(
-        edges.copy(), 
+        edges, 
         cv2.RETR_EXTERNAL, 
         cv2.CHAIN_APPROX_NONE
         )
@@ -91,7 +73,59 @@ for idx in range(0, len(files)):
         x2[i]= x + w    
         y1[i] = y
         y2[i] = y + h
-        
+    
+    dist = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
     for i in range(1, len(x1)):
-        
-        
+        dist[i] = pythagoras(x1[0],y1[0],x1[i],y1[i])
+    for i in range(2, len(x1)):
+        dist[i] = pythagoras(x1[1],y1[1],x1[i],y1[i])
+    for i in range(3, len(x1)):
+        dist[i] = pythagoras(x1[2],y1[2],x1[i],y1[i])
+    for i in range(4, len(x1)):
+        dist[i] = pythagoras(x1[3],y1[3],x1[i],y1[i])
+    for i in range(5, len(x1)):
+        dist[i] = pythagoras(x1[4],y1[4],x1[i],y1[i])
+    
+    avgDist = np.average(dist)
+    highestDist = sorted(dist, reverse=True)[0]
+    
+    return (dist, avgDist, highestDist)
+    
+#globale variabelen ===========================================================
+files = sorted(Path("test_fotos/training").rglob("*.jpg"))
+if not files:
+    raise SystemExit("No images found")
+data = pd.DataFrame()
+    
+#main logica loop =============================================================
+for idx in range(0, len(files)):
+    
+    #fetch paden voor voor- en zijaanzicht
+    #deze logica heeft de meeste moeite gekost van dit hele project
+    path = files[idx]
+    if path.parent.name == "Zij":
+        continue
+    imageF = cv2.imread(path)           #front view
+    imageS = cv2.imread(files[idx+200]) #side view
+    distF, avgF, highF = getDistances(imageF)
+    distS, avgS, highS = getDistances(imageS)
+    print("reading:")
+    print(path.parent.parent.name)
+    avgDiff = avgF - avgS
+    topDiff = highF - highS
+    imgData = pd.DataFrame({
+        "label": [path.parent.parent.name],
+        "index": idx,
+        "gem_afstand_V": avgF,
+        "gem_afstand_Z": avgS,
+        "langste_V": highF,
+        "langste_Z": highS,
+        "verschil_gem": avgDiff,
+        "verschil_top": topDiff
+    })
+    data = pd.concat([data, imgData])
+    
+data.to_csv("out.csv", index=False)
+print("done")
+    
+sns.violinplot(data=data, x="label", y="verschil_gem")
