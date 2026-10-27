@@ -125,7 +125,7 @@ for idx in range(0, len(files)):
     })
     data = pd.concat([data, imgData])
     
-data.to_csv("out.csv", index=False)
+data.to_csv("out_no_bones.csv", index=False)
 print("done")
     
 sns.violinplot(data=data, x="label", y="verschil_gem")
